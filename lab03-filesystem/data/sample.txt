@@ -1,0 +1,5 @@
+สวัสดี Node.js File System!
+บรรทัดที่ 2
+บรรทัดที่ 3 มีข้อมูลภาษาไทย
+This is line 4 with English text
+สิ้นสุดไฟล์ทดสอบ

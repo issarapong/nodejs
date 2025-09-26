@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> - WebSocket Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .test-section h3 {
+            color: #444;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            color: white;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .status.connected {
+            background: #28a745;
+        }
+
+        .status.disconnected {
+            background: #dc3545;
+        }
+
+        .status.connecting {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        button.danger {
+            background: #dc3545;
+        }
+
+        button.danger:hover {
+            background: #c82333;
+        }
+
+        button.success {
+            background: #28a745;
+        }
+
+        button.success:hover {
+            background: #218838;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        textarea {
+            min-height: 100px;
+            font-family: monospace;
+        }
+
+        .log {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.8em;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+
+        .log-entry.info {
+            color: #63b3ed;
+        }
+
+        .log-entry.success {
+            color: #68d391;
+        }
+
+        .log-entry.error {
+            color: #fc8181;
+        }
+
+        .log-entry.warning {
+            color: #fbb040;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .json-viewer {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 0.85em;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .metric {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .room-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .room-item {
+            padding: 8px 15px;
+            background: #e9ecef;
+            border: 2px solid #dee2e6;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .room-item:hover {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+
+        .room-item.active {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><%= title %></h1>
+        <p style="text-align: center; color: #666; margin-bottom: 30px;">
+            ทดสอบการเชื่อมต่อ WebSocket และฟีเจอร์ Real-time
+        </p>
+
+        <div class="grid">
+            <!-- Main Socket Connection -->
+            <div class="test-section">
+                <h3>🔌 การเชื่อมต่อหลัก</h3>
+                <div class="status connecting" id="mainStatus">กำลังเชื่อมต่อ...</div>
+                <div class="controls">
+                    <button id="connectMain">เชื่อมต่อ</button>
+                    <button id="disconnectMain" class="danger">ตัดการเชื่อมต่อ</button>
+                    <button id="pingTest">ทดสอบ Ping</button>
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value" id="pingTime">-</div>
+                        <div class="metric-label">Ping (ms)</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="uptime">-</div>
+                        <div class="metric-label">Uptime</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Socket -->
+            <div class="test-section">
+                <h3>💬 Socket แชท</h3>
+                <div class="status connecting" id="chatStatus">กำลังเชื่อมต่อ...</div>
+                <div class="controls">
+                    <button id="connectChat">เชื่อมต่อแชท</button>
+                    <button id="disconnectChat" class="danger">ตัดการเชื่อมต่อ</button>
+                </div>
+                
+                <div class="room-list">
+                    <div class="room-item active" data-room="general">ทั่วไป</div>
+                    <div class="room-item" data-room="tech">เทค</div>
+                    <div class="room-item" data-room="random">สุ่ม</div>
+                </div>
+                
+                <input type="text" id="messageInput" placeholder="พิมพ์ข้อความทดสอบ..." maxlength="200">
+                <div class="controls">
+                    <button id="sendMessage" class="success">ส่งข้อความ</button>
+                    <button id="startTyping">เริ่มพิมพ์</button>
+                    <button id="stopTyping">หยุดพิมพ์</button>
+                </div>
+            </div>
+
+            <!-- Notification Socket -->
+            <div class="test-section">
+                <h3>🔔 Socket การแจ้งเตือน</h3>
+                <div class="status connecting" id="notificationStatus">กำลังเชื่อมต่อ...</div>
+                <div class="controls">
+                    <button id="connectNotification">เชื่อมต่อการแจ้งเตือน</button>
+                    <button id="disconnectNotification" class="danger">ตัดการเชื่อมต่อ</button>
+                    <button id="testNotification">ทดสอบการแจ้งเตือน</button>
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value" id="unreadCount">0</div>
+                        <div class="metric-label">ยังไม่อ่าน</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Socket (Admin) -->
+            <div class="test-section">
+                <h3>📊 Socket แดชบอร์ด (Admin)</h3>
+                <div class="status connecting" id="dashboardStatus">กำลังเชื่อมต่อ...</div>
+                <div class="controls">
+                    <button id="connectDashboard">เชื่อมต่อแดชบอร์ด</button>
+                    <button id="disconnectDashboard" class="danger">ตัดการเชื่อมต่อ</button>
+                    <button id="getStats">ดูสถิติ</button>
+                    <button id="getUsers">ดูผู้ใช้</button>
+                </div>
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="metric-value" id="activeUsers">0</div>
+                        <div class="metric-label">ผู้ใช้ออนไลน์</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-value" id="totalRooms">0</div>
+                        <div class="metric-label">ห้องแชท</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Event Logs -->
+        <div class="test-section">
+            <h3>📝 Event Logs</h3>
+            <div class="controls">
+                <button id="clearLogs" class="warning">ล้าง Log</button>
+                <button id="exportLogs">ส่งออก Log</button>
+            </div>
+            <div class="log" id="eventLog"></div>
+        </div>
+
+        <!-- Raw Data -->
+        <div class="test-section">
+            <h3>🔍 ข้อมูลดิบ</h3>
+            <div class="json-viewer" id="rawData">
+                กำลังรอข้อมูล...
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        class WebSocketTester {
+            constructor() {
+                this.sockets = {
+                    main: null,
+                    chat: null,
+                    notification: null,
+                    dashboard: null
+                };
+                
+                this.currentRoom = 'general';
+                this.eventLog = document.getElementById('eventLog');
+                this.rawData = document.getElementById('rawData');
+                this.metrics = {
+                    ping: 0,
+                    uptime: 0,
+                    unreadCount: 0,
+                    activeUsers: 0,
+                    totalRooms: 0
+                };
+                
+                this.initializeEventListeners();
+                this.startTesting();
+            }
+
+            initializeEventListeners() {
+                // Main socket controls
+                document.getElementById('connectMain').addEventListener('click', () => this.connectMain());
+                document.getElementById('disconnectMain').addEventListener('click', () => this.disconnectMain());
+                document.getElementById('pingTest').addEventListener('click', () => this.pingTest());
+
+                // Chat socket controls
+                document.getElementById('connectChat').addEventListener('click', () => this.connectChat());
+                document.getElementById('disconnectChat').addEventListener('click', () => this.disconnectChat());
+                document.getElementById('sendMessage').addEventListener('click', () => this.sendMessage());
+                document.getElementById('startTyping').addEventListener('click', () => this.startTyping());
+                document.getElementById('stopTyping').addEventListener('click', () => this.stopTyping());
+
+                // Room switching
+                document.querySelectorAll('.room-item').forEach(item => {
+                    item.addEventListener('click', () => this.switchRoom(item.dataset.room));
+                });
+
+                // Notification controls
+                document.getElementById('connectNotification').addEventListener('click', () => this.connectNotification());
+                document.getElementById('disconnectNotification').addEventListener('click', () => this.disconnectNotification());
+                document.getElementById('testNotification').addEventListener('click', () => this.testNotification());
+
+                // Dashboard controls
+                document.getElementById('connectDashboard').addEventListener('click', () => this.connectDashboard());
+                document.getElementById('disconnectDashboard').addEventListener('click', () => this.disconnectDashboard());
+                document.getElementById('getStats').addEventListener('click', () => this.getStats());
+                document.getElementById('getUsers').addEventListener('click', () => this.getUsers());
+
+                // Log controls
+                document.getElementById('clearLogs').addEventListener('click', () => this.clearLogs());
+                document.getElementById('exportLogs').addEventListener('click', () => this.exportLogs());
+
+                // Enter key for message input
+                document.getElementById('messageInput').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.sendMessage();
+                    }
+                });
+            }
+
+            startTesting() {
+                this.log('🚀 เริ่มต้นระบบทดสอบ WebSocket', 'info');
+                this.connectMain();
+            }
+
+            // Main Socket Methods
+            connectMain() {
+                if (this.sockets.main) {
+                    this.sockets.main.disconnect();
+                }
+
+                this.sockets.main = io('/', {
+                    auth: {
+                        token: this.generateTestToken()
+                    }
+                });
+
+                this.sockets.main.on('connect', () => {
+                    this.updateStatus('mainStatus', 'connected', 'เชื่อมต่อแล้ว');
+                    this.log('✅ Main socket connected', 'success');
+                });
+
+                this.sockets.main.on('disconnect', () => {
+                    this.updateStatus('mainStatus', 'disconnected', 'ตัดการเชื่อมต่อ');
+                    this.log('❌ Main socket disconnected', 'error');
+                });
+
+                this.sockets.main.on('connection_established', (data) => {
+                    this.log(`🎉 Connection established: ${JSON.stringify(data)}`, 'success');
+                    this.updateRawData('connection', data);
+                });
+
+                this.sockets.main.on('connect_error', (error) => {
+                    this.log(`❌ Connection error: ${error.message}`, 'error');
+                });
+            }
+
+            disconnectMain() {
+                if (this.sockets.main) {
+                    this.sockets.main.disconnect();
+                }
+            }
+
+            pingTest() {
+                if (!this.sockets.main) return;
+                
+                const startTime = Date.now();
+                this.sockets.main.emit('ping', (response) => {
+                    const pingTime = Date.now() - startTime;
+                    this.metrics.ping = pingTime;
+                    document.getElementById('pingTime').textContent = pingTime;
+                    this.log(`🏓 Ping: ${pingTime}ms`, 'info');
+                });
+            }
+
+            // Chat Socket Methods
+            connectChat() {
+                if (this.sockets.chat) {
+                    this.sockets.chat.disconnect();
+                }
+
+                this.sockets.chat = io('/chat', {
+                    auth: {
+                        token: this.generateTestToken()
+                    }
+                });
+
+                this.sockets.chat.on('connect', () => {
+                    this.updateStatus('chatStatus', 'connected', 'เชื่อมต่อแล้ว');
+                    this.log('✅ Chat socket connected', 'success');
+                    this.joinRoom(this.currentRoom);
+                });
+
+                this.sockets.chat.on('disconnect', () => {
+                    this.updateStatus('chatStatus', 'disconnected', 'ตัดการเชื่อมต่อ');
+                    this.log('❌ Chat socket disconnected', 'error');
+                });
+
+                this.sockets.chat.on('message_received', (data) => {
+                    this.log(`💬 Message received: ${data.content}`, 'info');
+                    this.updateRawData('message', data);
+                });
+
+                this.sockets.chat.on('typing_indicator', (data) => {
+                    this.log(`⌨️ ${data.user.username} ${data.isTyping ? 'started' : 'stopped'} typing`, 'info');
+                });
+
+                this.sockets.chat.on('user_joined_room', (data) => {
+                    this.log(`👋 ${data.user.username} joined room`, 'info');
+                });
+
+                this.sockets.chat.on('user_left_room', (data) => {
+                    this.log(`👋 ${data.user.username} left room`, 'info');
+                });
+            }
+
+            disconnectChat() {
+                if (this.sockets.chat) {
+                    this.sockets.chat.disconnect();
+                }
+            }
+
+            sendMessage() {
+                const messageInput = document.getElementById('messageInput');
+                const message = messageInput.value.trim();
+                
+                if (!message || !this.sockets.chat) return;
+
+                const messageData = {
+                    roomId: this.currentRoom,
+                    content: message,
+                    type: 'text'
+                };
+
+                this.sockets.chat.emit('send_message', messageData, (response) => {
+                    if (response.success) {
+                        this.log(`✅ Message sent: ${message}`, 'success');
+                        messageInput.value = '';
+                    } else {
+                        this.log(`❌ Failed to send message: ${response.message}`, 'error');
+                    }
+                });
+            }
+
+            startTyping() {
+                if (!this.sockets.chat) return;
+                
+                this.sockets.chat.emit('typing_start', { roomId: this.currentRoom });
+                this.log('⌨️ Started typing indicator', 'info');
+            }
+
+            stopTyping() {
+                if (!this.sockets.chat) return;
+                
+                this.sockets.chat.emit('typing_stop', { roomId: this.currentRoom });
+                this.log('⌨️ Stopped typing indicator', 'info');
+            }
+
+            joinRoom(roomId) {
+                if (!this.sockets.chat) return;
+
+                this.sockets.chat.emit('join_room', { roomId }, (response) => {
+                    if (response.success) {
+                        this.log(`🏠 Joined room: ${roomId}`, 'success');
+                    } else {
+                        this.log(`❌ Failed to join room: ${response.message}`, 'error');
+                    }
+                });
+            }
+
+            switchRoom(roomId) {
+                if (roomId === this.currentRoom) return;
+
+                // Leave current room
+                if (this.sockets.chat) {
+                    this.sockets.chat.emit('leave_room', { roomId: this.currentRoom });
+                }
+
+                // Update UI
+                document.querySelectorAll('.room-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                document.querySelector(`[data-room="${roomId}"]`).classList.add('active');
+
+                // Join new room
+                this.currentRoom = roomId;
+                this.joinRoom(roomId);
+            }
+
+            // Notification Socket Methods
+            connectNotification() {
+                if (this.sockets.notification) {
+                    this.sockets.notification.disconnect();
+                }
+
+                this.sockets.notification = io('/notifications', {
+                    auth: {
+                        token: this.generateTestToken()
+                    }
+                });
+
+                this.sockets.notification.on('connect', () => {
+                    this.updateStatus('notificationStatus', 'connected', 'เชื่อมต่อแล้ว');
+                    this.log('✅ Notification socket connected', 'success');
+                });
+
+                this.sockets.notification.on('disconnect', () => {
+                    this.updateStatus('notificationStatus', 'disconnected', 'ตัดการเชื่อมต่อ');
+                    this.log('❌ Notification socket disconnected', 'error');
+                });
+
+                this.sockets.notification.on('new_notification', (data) => {
+                    this.log(`🔔 New notification: ${data.message}`, 'info');
+                    this.updateRawData('notification', data);
+                });
+
+                this.sockets.notification.on('unread_count_updated', (data) => {
+                    this.metrics.unreadCount = data.unreadCount;
+                    document.getElementById('unreadCount').textContent = data.unreadCount;
+                    this.log(`📊 Unread count: ${data.unreadCount}`, 'info');
+                });
+            }
+
+            disconnectNotification() {
+                if (this.sockets.notification) {
+                    this.sockets.notification.disconnect();
+                }
+            }
+
+            testNotification() {
+                if (!this.sockets.notification) return;
+
+                this.sockets.notification.emit('test_notification', {
+                    title: 'ทดสอบการแจ้งเตือน',
+                    message: 'นี่คือการแจ้งเตือนทดสอบจากระบบ'
+                });
+
+                this.log('🧪 Test notification sent', 'info');
+            }
+
+            // Dashboard Socket Methods
+            connectDashboard() {
+                if (this.sockets.dashboard) {
+                    this.sockets.dashboard.disconnect();
+                }
+
+                this.sockets.dashboard = io('/dashboard', {
+                    auth: {
+                        token: this.generateAdminToken()
+                    }
+                });
+
+                this.sockets.dashboard.on('connect', () => {
+                    this.updateStatus('dashboardStatus', 'connected', 'เชื่อมต่อแล้ว');
+                    this.log('✅ Dashboard socket connected', 'success');
+                });
+
+                this.sockets.dashboard.on('disconnect', () => {
+                    this.updateStatus('dashboardStatus', 'disconnected', 'ตัดการเชื่อมต่อ');
+                    this.log('❌ Dashboard socket disconnected', 'error');
+                });
+
+                this.sockets.dashboard.on('access_denied', (data) => {
+                    this.log(`❌ Dashboard access denied: ${data.message}`, 'error');
+                });
+
+                this.sockets.dashboard.on('dashboard_metrics_update', (data) => {
+                    this.log('📊 Dashboard metrics updated', 'info');
+                    this.updateRawData('dashboard_metrics', data);
+                    if (data.activeUsers) {
+                        this.metrics.activeUsers = data.activeUsers;
+                        document.getElementById('activeUsers').textContent = data.activeUsers;
+                    }
+                });
+            }
+
+            disconnectDashboard() {
+                if (this.sockets.dashboard) {
+                    this.sockets.dashboard.disconnect();
+                }
+            }
+
+            getStats() {
+                if (!this.sockets.dashboard) return;
+
+                this.sockets.dashboard.emit('get_system_stats', (response) => {
+                    if (response.success) {
+                        this.log('📊 System stats received', 'success');
+                        this.updateRawData('system_stats', response.data);
+                    } else {
+                        this.log(`❌ Failed to get stats: ${response.message}`, 'error');
+                    }
+                });
+            }
+
+            getUsers() {
+                if (!this.sockets.dashboard) return;
+
+                this.sockets.dashboard.emit('get_active_users', {}, (response) => {
+                    if (response.success) {
+                        this.log(`👥 Active users: ${response.data.count}`, 'success');
+                        this.updateRawData('active_users', response.data);
+                        this.metrics.activeUsers = response.data.count;
+                        document.getElementById('activeUsers').textContent = response.data.count;
+                    } else {
+                        this.log(`❌ Failed to get users: ${response.message}`, 'error');
+                    }
+                });
+            }
+
+            // Utility Methods
+            generateTestToken() {
+                return 'test-token-' + Math.random().toString(36).substr(2, 9);
+            }
+
+            generateAdminToken() {
+                return 'admin-test-token-' + Math.random().toString(36).substr(2, 9);
+            }
+
+            updateStatus(elementId, status, text) {
+                const element = document.getElementById(elementId);
+                element.className = `status ${status}`;
+                element.textContent = text;
+            }
+
+            log(message, type = 'info') {
+                const timestamp = new Date().toLocaleTimeString('th-TH');
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry ${type}`;
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                
+                this.eventLog.appendChild(logEntry);
+                this.eventLog.scrollTop = this.eventLog.scrollHeight;
+            }
+
+            updateRawData(type, data) {
+                this.rawData.textContent = JSON.stringify({
+                    type,
+                    timestamp: new Date().toISOString(),
+                    data
+                }, null, 2);
+            }
+
+            clearLogs() {
+                this.eventLog.innerHTML = '';
+                this.log('🗑️ Logs cleared', 'info');
+            }
+
+            exportLogs() {
+                const logs = this.eventLog.textContent;
+                const blob = new Blob([logs], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `websocket-test-logs-${Date.now()}.txt`;
+                a.click();
+                
+                URL.revokeObjectURL(url);
+                this.log('💾 Logs exported', 'info');
+            }
+        }
+
+        // Initialize tester when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new WebSocketTester();
+        });
+    </script>
+</body>
+</html>

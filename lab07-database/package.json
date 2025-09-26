@@ -1,0 +1,49 @@
+{
+  "name": "lab07-database",
+  "version": "1.0.0",
+  "description": "Node.js Database Integration Lab with MongoDB and Mongoose",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "seed": "node utils/seed.js",
+    "test": "jest",
+    "test:db": "node utils/test-connection.js",
+    "test:api": "jest --testPathPattern=tests/api"
+  },
+  "keywords": [
+    "nodejs",
+    "mongodb",
+    "mongoose",
+    "database",
+    "express",
+    "api",
+    "crud",
+    "authentication"
+  ],
+  "author": "Node.js Lab Series",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "mongoose": "^7.5.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.0.0",
+    "morgan": "^1.10.0",
+    "dotenv": "^16.3.1",
+    "express-rate-limit": "^6.10.0",
+    "express-validator": "^7.0.1",
+    "moment": "^2.29.4",
+    "compression": "^1.7.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.6.4",
+    "supertest": "^6.3.3",
+    "@types/jest": "^29.5.5"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

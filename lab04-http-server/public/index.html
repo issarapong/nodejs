@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node.js HTTP Server Lab</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .content {
+            padding: 30px;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        h2 {
+            color: #4CAF50;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .api-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .api-link {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+            transition: transform 0.3s ease;
+        }
+        .api-link:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .api-link a {
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .api-link p {
+            margin: 10px 0 0 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .status {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .footer {
+            background: #343a40;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Node.js HTTP Server Lab</h1>
+            <p>การเรียนรู้ HTTP Server ด้วย Node.js</p>
+        </div>
+        
+        <div class="content">
+            <div class="status">
+                <strong>✅ สถานะ:</strong> เซิร์ฟเวอร์ทำงานปกติ<br>
+                <strong>🕒 เวลา:</strong> <span id="currentTime"></span><br>
+                <strong>📡 พอร์ต:</strong> 3000
+            </div>
+
+            <h2>🔗 ลิงก์ทดสอบ</h2>
+            <div class="api-links">
+                <div class="api-link">
+                    <a href="/">🏠 หน้าหลัก</a>
+                    <p>หน้าแรกของเว็บไซต์</p>
+                </div>
+                
+                <div class="api-link">
+                    <a href="/about">📋 เกี่ยวกับ</a>
+                    <p>ข้อมูลเกี่ยวกับ Lab นี้</p>
+                </div>
+                
+                <div class="api-link">
+                    <a href="/api/users">👥 API ผู้ใช้</a>
+                    <p>ข้อมูลผู้ใช้ในรูปแบบ JSON</p>
+                </div>
+                
+                <div class="api-link">
+                    <a href="/api/time">⏰ API เวลา</a>
+                    <p>เวลาปัจจุบันจากเซิร์ฟเวอร์</p>
+                </div>
+                
+                <div class="api-link">
+                    <a href="/api/status">📊 API สถานะ</a>
+                    <p>สถานะของเซิร์ฟเวอร์</p>
+                </div>
+                
+                <div class="api-link">
+                    <a href="/static/demo.html">📄 ไฟล์ Static</a>
+                    <p>ตัวอย่างการเสิร์ฟไฟล์ static</p>
+                </div>
+            </div>
+
+            <h2>📚 วิธีการทดสอบ</h2>
+            <ol>
+                <li>คลิกที่ลิงก์ด้านบนเพื่อทดสอบ</li>
+                <li>เปิด Developer Tools (F12) เพื่อดู Network tab</li>
+                <li>สังเกต HTTP headers และ response codes</li>
+                <li>ทดสอบ API endpoints ด้วย Postman หรือ curl</li>
+            </ol>
+
+            <h2>🧪 ตัวอย่าง curl commands</h2>
+            <pre style="background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto;">
+# ทดสอบ GET request
+curl -X GET http://localhost:3000/api/users
+
+# ทดสอบ POST request
+curl -X POST http://localhost:3000/api/users \
+  -H "Content-Type: application/json" \
+  -d '{"name":"ผู้ใช้ใหม่","email":"new@example.com"}'
+
+# ดู headers
+curl -I http://localhost:3000/api/status
+            </pre>
+        </div>
+
+        <div class="footer">
+            <p>Node.js HTTP Server Lab | สร้างด้วย ❤️ เพื่อการเรียนรู้</p>
+        </div>
+    </div>
+
+    <script>
+        // อัพเดทเวลาปัจจุบัน
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleString('th-TH');
+        }
+        
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        // เพิ่ม click tracking
+        document.querySelectorAll('.api-link a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                console.log('คลิกลิงก์:', this.href);
+            });
+        });
+    </script>
+</body>
+</html>

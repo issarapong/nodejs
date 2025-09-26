@@ -1,0 +1,30 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "สมชาย ใจดี",
+      "email": "somchai@example.com",
+      "age": 28,
+      "city": "กรุงเทพฯ"
+    },
+    {
+      "id": 2,
+      "name": "สมหญิง ใจงาม",
+      "email": "somying@example.com",
+      "age": 25,
+      "city": "เชียงใหม่"
+    },
+    {
+      "id": 3,
+      "name": "วิทย์ เก่งกล้า",
+      "email": "wit@example.com",
+      "age": 30,
+      "city": "ภูเก็ต"
+    }
+  ],
+  "metadata": {
+    "created": "2025-09-26",
+    "version": "1.0",
+    "description": "ไฟล์ข้อมูลตัวอย่างสำหรับทดสอบ File System"
+  }
+}

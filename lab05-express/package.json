@@ -1,0 +1,31 @@
+{
+  "name": "lab05-express",
+  "version": "1.0.0",
+  "description": "Lab 5: Express.js Framework",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "basic": "node basic-express.js",
+    "middleware": "node middleware-demo.js",
+    "routing": "node routing-demo.js"
+  },
+  "keywords": [
+    "nodejs",
+    "express",
+    "middleware",
+    "routing",
+    "api"
+  ],
+  "author": "Node.js Lab",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
